@@ -6,9 +6,22 @@ body {
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  background-color: rgba(255, 255, 255, .6) !important;
 }
 
 code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
     monospace;
+}
+
+html { 
+  background: url(https://z-p3-scontent.fsgn4-1.fna.fbcdn.net/v/t1.15752-9/361838298_664410088502292_75183791039846712_n.jpg?_nc_cat=101&ccb=1-7&_nc_sid=ae9488&_nc_ohc=zc4SUBA9YeMAX8wTzHX&_nc_ht=z-p3-scontent.fsgn4-1.fna&uss=fc33754de4f957f5&odm=ZnB0LndvcmtwbGFjZS5jb20&oe2=64DF4A07&oh=03_AdQikFK9-xay1hnPbjUt6Q_K0yAJTT6k7OuyjDA7KNpC7A&oe=64B7C6CB) no-repeat center center fixed; 
+  -webkit-background-size: cover;
+  -moz-background-size: cover;
+  -o-background-size: cover;
+  background-size: cover;
+}
+
+.ui.container.stackable.middle.aligned.grid {
+  background-color: rgba(255, 255, 255, .8) !important;
 }
