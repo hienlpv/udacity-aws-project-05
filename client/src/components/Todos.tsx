@@ -14,7 +14,13 @@ import {
   Loader
 } from 'semantic-ui-react'
 
-import { createTodo, deleteTodo, getTodos, patchTodo } from '../api/todos-api'
+import {
+  createTodo,
+  deleteTodo,
+  getTodos,
+  patchTodo,
+  softDeleteTodo
+} from '../api/todos-api'
 import Auth from '../auth/Auth'
 import { Todo } from '../types/Todo'
 
@@ -46,25 +52,32 @@ export class Todos extends React.PureComponent<TodosProps, TodosState> {
 
   onTodoCreate = async (event: React.ChangeEvent<HTMLButtonElement>) => {
     try {
+      this.setState({ todos: [], loadingTodos: true })
       const dueDate = this.calculateDueDate()
-      const newTodo = await createTodo(this.props.auth.getIdToken(), {
+      await createTodo(this.props.auth.getIdToken(), {
         name: this.state.newTodoName,
         dueDate
       })
+      const todos = await getTodos(this.props.auth.getIdToken())
       this.setState({
-        todos: [...this.state.todos, newTodo],
-        newTodoName: ''
+        todos,
+        newTodoName: '',
+        loadingTodos: false
       })
     } catch {
       alert('Todo creation failed')
     }
   }
 
-  onTodoDelete = async (todoId: string) => {
+  onTodoSoftDelete = async (todoId: string) => {
     try {
-      await deleteTodo(this.props.auth.getIdToken(), todoId)
+      this.setState({ todos: [], newTodoName: '', loadingTodos: true })
+      await softDeleteTodo(this.props.auth.getIdToken(), todoId)
+      const todos = await getTodos(this.props.auth.getIdToken())
       this.setState({
-        todos: this.state.todos.filter(todo => todo.todoId !== todoId)
+        todos,
+        newTodoName: '',
+        loadingTodos: false
       })
     } catch {
       alert('Todo deletion failed')
@@ -187,7 +200,7 @@ export class Todos extends React.PureComponent<TodosProps, TodosState> {
                 <Button
                   icon
                   color="red"
-                  onClick={() => this.onTodoDelete(todo.todoId)}
+                  onClick={() => this.onTodoSoftDelete(todo.todoId)}
                 >
                   <Icon name="delete" />
                 </Button>

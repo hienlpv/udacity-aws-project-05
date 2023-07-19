@@ -6,7 +6,6 @@ import { TodoItem } from '../models/TodoItem';
 import { UpdateTodoRequest } from '../requests/UpdateTodoRequest';
 import { createLogger } from '../utils/logger';
 
-const AWSXRay = require('aws-xray-sdk');
 const XAWS = AWSXRay.captureAWS(AWS);
 
 const logger = createLogger('TodosAccess');
@@ -18,41 +17,18 @@ export class TodosAccess {
     todosTable = process.env.TODOS_TABLE;
     todosIndex = process.env.INDEX_NAME;
 
-    // Search Todo
-    async searchTodo(key: string, userId: string) {
-        const params = {
-            TableName: this.todosTable,
-            FilterExpression: 'contains(#key, :task_name)',
-            KeyConditionExpression: 'userId = :userId',
-            ExpressionAttributeNames: {
-                '#key': 'name',
-            },
-            ExpressionAttributeValues: {
-                ':task_name': key,
-                ':userId': userId,
-            },
-        };
-        const data = await this.docClient.query(params).promise();
-        return data.Items as TodoItem[];
-    }
-
-    async getAllTodos(): Promise<TodoItem[]> {
-        const result = await this.docClient.query({ TableName: this.todosTable }).promise();
-
-        const items = result.Items;
-        return items as TodoItem[];
-    }
-
-    async getTodos(userId: string): Promise<TodoItem[]> {
+    async getTodos(userId: string, deleted = false): Promise<TodoItem[]> {
         logger.info('Getting all todos function called');
 
         const result = await this.docClient
             .query({
                 TableName: this.todosTable,
                 IndexName: this.todosIndex,
+                FilterExpression: "deleted = :deleted",
                 KeyConditionExpression: 'userId = :userId',
                 ExpressionAttributeValues: {
                     ':userId': userId,
+                    ':deleted': deleted
                 },
             })
             .promise();
@@ -88,6 +64,22 @@ export class TodosAccess {
         return true;
     }
 
+    // Soft delete todo
+    async softDeleteTodo(userId: string, todoId: string): Promise<boolean> {
+        await this.docClient
+            .update({
+                TableName: this.todosTable,
+                Key: {
+                    userId: userId,
+                    todoId: todoId,
+                },
+                UpdateExpression: "set deleted = :deleted",
+                ExpressionAttributeValues: { ':deleted': true },
+            })
+            .promise();
+        return true;
+    }
+
     // Update todo
     async updateTodo(todoId: string, userId: string, updateTodoRequest: UpdateTodoRequest) {
         let expressionAttibutes = {
@@ -111,6 +103,22 @@ export class TodosAccess {
                 },
             })
             .promise();
+    }
+
+    // Restore Todo
+    async restoreTodo(userId: string, todoId: string) {
+        await this.docClient
+            .update({
+                TableName: this.todosTable,
+                Key: {
+                    userId: userId,
+                    todoId: todoId,
+                },
+                UpdateExpression: "set deleted = :deleted",
+                ExpressionAttributeValues: { ':deleted': false },
+            })
+            .promise();
+        return true;
     }
 
     // Upload Image

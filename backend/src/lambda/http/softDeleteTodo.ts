@@ -2,16 +2,15 @@ import 'source-map-support/register';
 
 import { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
 
-import { updateTodo } from '../../businessLogic/todos';
-import { UpdateTodoRequest } from '../../requests/UpdateTodoRequest';
+import { softDeleteTodo } from '../../businessLogic/todos';
 import { getUserId } from '../utils';
 
 export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
     const todoId = event.pathParameters.todoId;
-    const updatedTodo: UpdateTodoRequest = JSON.parse(event.body);
-    // TODO: Update a TODO item with the provided id using values in the "updatedTodo" object
+    // TODO: Remove a TODO item by id
+
     const userId = getUserId(event);
-    await updateTodo(todoId, userId, updatedTodo);
+    const result = await softDeleteTodo(userId, todoId);
 
     return {
         statusCode: 204,
@@ -19,6 +18,8 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
             'Access-Control-Allow-Origin': '*',
             'Access-Control-Allow-Credentials': true,
         },
-        body: '',
+        body: JSON.stringify({
+            result,
+        }),
     };
 };
